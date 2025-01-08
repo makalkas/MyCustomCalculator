@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace MyCustomCalculator
 {
     public partial class StandardForm : Form
     {
-        private List<string> calculationsHistory = new List<string>();
+        private List<string> calculationsHistory = new List<string>();//Stores each calculation set for possible history integration.
         private double currentNumber = 0;
-        private bool addDecimalOnNextNumber = false;
         private CalculationStateFactory _calculationStateFactory;
         private OperationFactory _operationFactory;
         private readonly StateKeeper _keeper;
@@ -90,6 +90,7 @@ namespace MyCustomCalculator
 
                 UpdateNumberDisplay(_calculationStateFactory.Result.ToString());
                 currentNumber = _calculationStateFactory.Result;
+                calculationsHistory.Add(_calculationStateFactory.FullCalculation);
                 _calculationStateFactory.ResetState();
                 _calculationStateFactory.InsertFirstNumber(currentNumber);
                 _calculationStateFactory.InsertOperation(operation);
@@ -102,6 +103,7 @@ namespace MyCustomCalculator
                 currentNumber = 0;
                 _calculationStateFactory.InsertSecondNumber(double.Parse(NumberDisplay.Text));
                 string currentCalc = _calculationStateFactory.FullCalculation;
+                calculationsHistory.Add(_calculationStateFactory.FullCalculation);
                 UpdateCurrentCalculationDisplay(_calculationStateFactory.FullCalculation + " =");
                 UpdateNumberDisplay(_calculationStateFactory.Result.ToString());
                 _keeper.CalculationState = StateKeeper.State.FirstInput;
@@ -123,11 +125,23 @@ namespace MyCustomCalculator
 
         public void AddDecimal(object sender, EventArgs e)
         {
-            if (!currentNumber.ToString().Contains("."))
+            string[] operations = { "+", "-", "X", "÷", "=" };
+            if (operations.Any(x => CurrentCalculation.Text.EndsWith(x)) && !NumberDisplay.Text.Contains("."))
             {
-                addDecimalOnNextNumber = true;
-                UpdateNumberDisplay(currentNumber.ToString() + ".");
+                UpdateNumberDisplay(NumberDisplay.Text + ".");
+                _keeper.CalculationState = StateKeeper.State.SecondInput;
             }
+            else if (!NumberDisplay.Text.Contains("."))
+            {
+
+                UpdateNumberDisplay(NumberDisplay.Text + ".");
+            }
+            else if (_keeper.CalculationState == StateKeeper.State.FirstOperation)
+            {
+                UpdateNumberDisplay("0.");
+                _keeper.CalculationState = StateKeeper.State.SecondInput;
+            }
+
         }
 
         public void UpdateNumberDisplay(string newNumber)
