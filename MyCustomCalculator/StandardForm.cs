@@ -156,7 +156,6 @@ namespace MyCustomCalculator
 
         private void Clear(object sender, EventArgs e)
         {
-            addDecimalOnNextNumber = false;
             UpdateCurrentCalculationDisplay(string.Empty);
             UpdateNumberDisplay("0");
             currentNumber = 0;
@@ -166,7 +165,6 @@ namespace MyCustomCalculator
 
         private void ClearEverything(object sender, EventArgs e)
         {
-            addDecimalOnNextNumber = false;
             UpdateNumberDisplay("0");
             ResetForNextNumber(string.Empty);
             _calculationStateFactory.ResetState();
@@ -195,7 +193,6 @@ namespace MyCustomCalculator
                     {
                         display = display.Substring(0, display.Length - 1);
                         UpdateNumberDisplay(display);
-                        addDecimalOnNextNumber = true;
                     }
                     else
                     {
