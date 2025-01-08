@@ -1,4 +1,8 @@
-﻿namespace MyCustomCalculator
+﻿// -------------------------------------------------------------------------------
+// Copyright (c) 2024 Michael Kalkas
+// Used for mentoring others.
+// -------------------------------------------------------------------------------
+namespace MyCustomCalculator
 {
     public class StateKeeper
     {

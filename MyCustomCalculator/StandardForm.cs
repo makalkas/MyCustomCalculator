@@ -1,10 +1,15 @@
-﻿using System;
+﻿// -------------------------------------------------------------------------------
+// Copyright (c) 2024 Michael Kalkas
+// Used for mentoring others.
+// -------------------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
 namespace MyCustomCalculator
 {
+
     public partial class StandardForm : Form
     {
         private List<string> calculationsHistory = new List<string>();//Stores each calculation set for possible history integration.
@@ -12,7 +17,7 @@ namespace MyCustomCalculator
         private CalculationStateFactory _calculationStateFactory;
         private OperationFactory _operationFactory;
         private readonly StateKeeper _keeper;
-        private bool lastOperationWasEquals = false;
+
 
         public StandardForm(CalculationStateFactory calculationStateFactory, OperationFactory operationFactory, StateKeeper keeper)
         {

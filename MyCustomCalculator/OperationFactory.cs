@@ -1,4 +1,8 @@
-﻿using System;
+﻿// -------------------------------------------------------------------------------
+// Copyright (c) 2024 Michael Kalkas
+// Used for mentoring others.
+// -------------------------------------------------------------------------------
+using System;
 
 namespace MyCustomCalculator
 {

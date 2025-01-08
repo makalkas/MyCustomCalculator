@@ -1,4 +1,9 @@
-﻿using MyCustomCalculator.Exceptions;
+﻿// -------------------------------------------------------------------------------
+// Copyright (c) 2024 Michael Kalkas
+// Used for mentoring others.
+// -------------------------------------------------------------------------------
+
+using MyCustomCalculator.Exceptions;
 
 namespace MyCustomCalculator
 {
