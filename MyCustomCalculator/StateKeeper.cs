@@ -4,7 +4,7 @@
     {
         public enum State
         {
-            FirstInput, FirstOperation, SecondInput, PerformCalculation
+            FirstInput, FirstOperation, SecondInput, PerformCalculation, PerformOperationOnCurrentNumber
         }
         public StateKeeper()
         {

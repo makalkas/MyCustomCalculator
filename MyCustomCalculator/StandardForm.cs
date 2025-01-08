@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace MyCustomCalculator
@@ -13,6 +12,7 @@ namespace MyCustomCalculator
         private CalculationStateFactory _calculationStateFactory;
         private OperationFactory _operationFactory;
         private readonly StateKeeper _keeper;
+        private bool lastOperationWasEquals = false;
 
         public StandardForm(CalculationStateFactory calculationStateFactory, OperationFactory operationFactory, StateKeeper keeper)
         {
@@ -24,80 +24,90 @@ namespace MyCustomCalculator
 
         public void NumberSelectedClick(object sender, EventArgs e)
         {
-            if (sender.GetType() == typeof(Button))
+            if (CurrentCalculation.Text.Contains("="))
             {
-                Button button = (Button)sender;
+                UpdateCurrentCalculationDisplay(string.Empty);
+                UpdateNumberDisplay(string.Empty);
+            }
 
-                if (_keeper.CalculationState == StateKeeper.State.PerformCalculation)
+            if (_keeper.CalculationState == StateKeeper.State.FirstOperation)
+            {
+                _keeper.CalculationState = StateKeeper.State.SecondInput;
+                UpdateNumberDisplay("0");
+            }
+
+            if (_keeper.CalculationState == StateKeeper.State.FirstInput || _keeper.CalculationState == StateKeeper.State.SecondInput)
+            {
+                string stringToDisplay = string.Empty;
+
+                if (sender.GetType() == typeof(Button))
                 {
-                    _keeper.CalculationState = StateKeeper.State.FirstOperation;
-                    _calculationStateFactory.InsertFirstNumber(double.Parse(NumberDisplay.Text));
-                    NumberDisplay.Text = button.Text;
-                    CurrentCalculation.Text = currentNumber + " " + _calculationStateFactory.CurrentOperation;
-                    currentNumber = 0;
+                    Button button = (Button)sender;
+                    stringToDisplay = button.Text;
                 }
 
-                if (currentNumber == 0)
+                if (NumberDisplay.Text == "0")
                 {
-                    currentNumber = double.Parse(button.Text);
+                    UpdateNumberDisplay(stringToDisplay);
                 }
                 else
                 {
-                    string number = currentNumber.ToString();
-                    if (addDecimalOnNextNumber)
-                    {
-                        addDecimalOnNextNumber = false;
-                        number = number + ".";
-                    }
-
-                    number = number + button.Text;
-                    currentNumber = double.Parse(number);
+                    UpdateNumberDisplay(NumberDisplay.Text + stringToDisplay);
                 }
-
-
-
-                if (_keeper.CalculationState == StateKeeper.State.FirstOperation)
-                    _keeper.CalculationState = StateKeeper.State.SecondInput;
-
-                UpdateNumberDisplay(currentNumber.ToString());
             }
         }
 
         public void OperationClick(object sender, EventArgs e)
         {
-            string operation = "0";
-            char[] charsToCheck = { '+', '-', 'X', '÷' };
-
-            ProcessTextInput();
-
-            if (CurrentCalculation.Text.Contains("="))
-            {
-                CurrentCalculation.Text = NumberDisplay.Text;
-            }
-
+            string operation = string.Empty;
             if (sender.GetType() == typeof(Button))
             {
                 Button button = (Button)sender;
                 operation = button.Text;
             }
 
+            currentNumber = double.Parse(NumberDisplay.Text);
+            if (_keeper.CalculationState == StateKeeper.State.FirstInput)
+            {
+                _keeper.CalculationState = StateKeeper.State.FirstOperation;
+                UpdateCurrentCalculationDisplay(currentNumber + " " + operation);
+                _calculationStateFactory.InsertFirstNumber(currentNumber);
+                _calculationStateFactory.InsertOperation(operation);
+            }
+            else if (_keeper.CalculationState == StateKeeper.State.SecondInput)
+            {
+                _keeper.CalculationState = StateKeeper.State.PerformCalculation;
+                _calculationStateFactory.InsertSecondNumber(currentNumber);
+                PerformCalulationUpdate(operation);
+            }
+            /*
+            string operation = "0";
+            char[] charsToCheck = { '+', '-', 'X', '÷' };
+            ProcessTextInput();
+            if (CurrentCalculation.Text.Contains("="))
+            {
+                UpdateCurrentCalculationDisplay(NumberDisplay.Text);
+            }
+            if (sender.GetType() == typeof(Button))
+            {
+                Button button = (Button)sender;
+                operation = button.Text;
+            }
             if (_keeper.CalculationState == StateKeeper.State.PerformCalculation)
             {
                 _calculationStateFactory.ResetState();
                 _calculationStateFactory.InsertFirstNumber(double.Parse(NumberDisplay.Text));
-                CurrentCalculation.Text = NumberDisplay.Text + " " + operation;
+                UpdateCurrentCalculationDisplay(NumberDisplay.Text + " " + operation);
                 _calculationStateFactory.InsertOperation(operation);
 
 
             }
-
             string currentCalc = string.Empty;
-
             if (_keeper.CalculationState == StateKeeper.State.FirstInput)
             {
                 if (string.IsNullOrEmpty(CurrentCalculation.Text))
                 {
-                    CurrentCalculation.Text = currentNumber.ToString();
+                    UpdateCurrentCalculationDisplay(currentNumber.ToString());
                 }
 
                 currentCalc = CurrentCalculation.Text;
@@ -109,23 +119,33 @@ namespace MyCustomCalculator
 
                 _keeper.CalculationState = StateKeeper.State.FirstOperation;
             }
-
-
-
             if (_keeper.CalculationState == StateKeeper.State.SecondInput)
             {
-                _calculationStateFactory.InsertOperation(operation);
-                _calculationStateFactory.InsertSecondNumber(currentNumber);
-                CurrentCalculation.Text = CurrentCalculation.Text + " " + NumberDisplay.Text;
-                NumberDisplay.Text = _calculationStateFactory.Result.ToString();
-                currentNumber = _calculationStateFactory.Result;
+                //currentNumber = double.Parse(NumberDisplay.Text);
+                if (_calculationStateFactory.CurrentOperation != string.Empty)
+                {
+                    _calculationStateFactory.InsertSecondNumber(double.Parse(NumberDisplay.Text));
+                    UpdateCurrentCalculationDisplay(_calculationStateFactory.Result.ToString() + " " + operation);
+                    UpdateNumberDisplay(_calculationStateFactory.Result.ToString());
+                    currentCalc = CurrentCalculation.Text;
+                    currentNumber = _calculationStateFactory.Result;
+                    _calculationStateFactory.ResetState();
+                    _calculationStateFactory.InsertFirstNumber(double.Parse(NumberDisplay.Text));
+                    _calculationStateFactory.InsertOperation(operation);
+                    _keeper.CalculationState = StateKeeper.State.FirstOperation;
+                }
+                //_calculationStateFactory.InsertOperation(operation);
+                //_calculationStateFactory.InsertSecondNumber(currentNumber);
+                //UpdateCurrentCalculationDisplay(CurrentCalculation.Text + " " + NumberDisplay.Text);
+                //UpdateNumberDisplay(_calculationStateFactory.Result.ToString());
+                //currentNumber = _calculationStateFactory.Result;
                 if (!charsToCheck.Any(x => currentCalc.EndsWith(x.ToString())))
                 {
                     currentCalc = currentCalc + " " + operation;
                 }
                 else
                 {
-                    currentCalc = currentNumber.ToString();
+                    currentCalc = _calculationStateFactory.FullCalculation;
                     ResetForNextNumber(currentCalc);
                     _calculationStateFactory.ResetState();
                     _calculationStateFactory.InsertFirstNumber(currentNumber);
@@ -135,12 +155,44 @@ namespace MyCustomCalculator
                 _keeper.CalculationState = StateKeeper.State.PerformCalculation;
                 calculationsHistory.Add(currentCalc);
             }
+            */
+        }
 
+        private void PerformCalulationUpdate(string operation)
+        {
+            if (_keeper.CalculationState == StateKeeper.State.PerformCalculation && operation != "=")
+            {
+
+                UpdateNumberDisplay(_calculationStateFactory.Result.ToString());
+                currentNumber = _calculationStateFactory.Result;
+                _calculationStateFactory.ResetState();
+                _calculationStateFactory.InsertFirstNumber(currentNumber);
+                _calculationStateFactory.InsertOperation(operation);
+                _keeper.CalculationState = StateKeeper.State.FirstOperation;
+                UpdateCurrentCalculationDisplay(_calculationStateFactory.FullCalculation);
+            }
+
+            if (_keeper.CalculationState == StateKeeper.State.PerformCalculation && operation == "=")
+            {
+                currentNumber = 0;
+                _calculationStateFactory.InsertSecondNumber(double.Parse(NumberDisplay.Text));
+                string currentCalc = _calculationStateFactory.FullCalculation;
+                UpdateCurrentCalculationDisplay(_calculationStateFactory.FullCalculation + " =");
+                UpdateNumberDisplay(_calculationStateFactory.Result.ToString());
+                _keeper.CalculationState = StateKeeper.State.FirstInput;
+            }
         }
 
         public void ChangeSignClick(object sender, EventArgs e)
         {
-            currentNumber = currentNumber * -1;
+            if (currentNumber == double.Parse(NumberDisplay.Text))
+            {
+                currentNumber = currentNumber * -1;
+            }
+            else
+            {
+                currentNumber = double.Parse(NumberDisplay.Text) * -1;
+            }
             UpdateNumberDisplay(currentNumber.ToString());
         }
 
@@ -158,26 +210,31 @@ namespace MyCustomCalculator
             NumberDisplay.Text = newNumber;
         }
 
-        public void Clear(object sender, EventArgs e)
+        public void UpdateCurrentCalculationDisplay(string stringToDisplay)
+        {
+            CurrentCalculation.Text = stringToDisplay;
+        }
+
+        private void Clear(object sender, EventArgs e)
         {
             addDecimalOnNextNumber = false;
-            NumberDisplay.Text = "0";
+            UpdateCurrentCalculationDisplay(string.Empty);
+            UpdateNumberDisplay("0");
             currentNumber = 0;
             _calculationStateFactory.ResetState();
             _keeper.CalculationState = StateKeeper.State.FirstInput;
         }
 
-        public void ClearEverything(object sender, EventArgs e)
+        private void ClearEverything(object sender, EventArgs e)
         {
             addDecimalOnNextNumber = false;
-            NumberDisplay.Text = "0";
-            currentNumber = 0;
-            CurrentCalculation.Text = string.Empty;
+            UpdateNumberDisplay("0");
+            ResetForNextNumber(string.Empty);
             _calculationStateFactory.ResetState();
             _keeper.CalculationState = StateKeeper.State.FirstInput;
         }
 
-        public void BackSpace(object sender, EventArgs e)
+        private void BackSpace(object sender, EventArgs e)
         {
             string display = NumberDisplay.Text;
             if (display == "0" || string.IsNullOrEmpty(display))
@@ -214,52 +271,32 @@ namespace MyCustomCalculator
         {
             if (NumberDisplay.Text == ".")
             {
-                NumberDisplay.Text = "0";
+                UpdateNumberDisplay("0");
             }
 
             if (NumberDisplay.Text.StartsWith(".") && NumberDisplay.Text.Length > 1)
             {
-                NumberDisplay.Text = "0" + NumberDisplay.Text;
+                UpdateNumberDisplay("0" + NumberDisplay.Text);
             }
 
             if (NumberDisplay.Text.EndsWith(".") && NumberDisplay.Text.Length > 1)
             {
-                NumberDisplay.Text = NumberDisplay.Text + "0";
+                UpdateNumberDisplay(NumberDisplay.Text + "0");
             }
         }
 
         private void ResetForNextNumber(string calculation)
         {
             currentNumber = 0;
-            CurrentCalculation.Text = calculation;
+            UpdateCurrentCalculationDisplay(calculation);
         }
 
         private void EqualsButton_Click(object sender, EventArgs e)
         {
-            if (_keeper.CalculationState != StateKeeper.State.SecondInput && _keeper.CalculationState != StateKeeper.State.PerformCalculation) return;
-            ProcessTextInput();
-
-            string currentCalc = CurrentCalculation.Text + " " + NumberDisplay.Text + " =";
-            CurrentCalculation.Text = currentCalc;
-            if (!string.IsNullOrEmpty(_calculationStateFactory.CurrentOperation) && _calculationStateFactory.SecondNumber == 0)
+            if (_keeper.CalculationState == StateKeeper.State.SecondInput)
             {
-                _calculationStateFactory.InsertSecondNumber(currentNumber);
-                NumberDisplay.Text = _calculationStateFactory.Result.ToString();
-                currentNumber = _calculationStateFactory.Result;
-                calculationsHistory.Add(currentCalc);
-                _calculationStateFactory.ResetState();
-                _calculationStateFactory.InsertFirstNumber(currentNumber);
-                _keeper.CalculationState = StateKeeper.State.FirstInput;
-            }
-
-            if (_keeper.CalculationState == StateKeeper.State.SecondInput && _calculationStateFactory.SecondNumber != currentNumber)
-            {
-                _calculationStateFactory.InsertSecondNumber(currentNumber);
-                NumberDisplay.Text = _calculationStateFactory.Result.ToString();
-                currentNumber = double.Parse(NumberDisplay.Text);
-                _calculationStateFactory.ResetState();
-                _calculationStateFactory.InsertFirstNumber(currentNumber);
                 _keeper.CalculationState = StateKeeper.State.PerformCalculation;
+                PerformCalulationUpdate("=");
             }
         }
 
@@ -317,10 +354,11 @@ namespace MyCustomCalculator
                 if (_calculationStateFactory.CurrentOperation == "X" || _calculationStateFactory.CurrentOperation == "÷")
                 {
                     percentage = secondNumber / 100;
+                    currentNumber = 0;
                     _calculationStateFactory.InsertSecondNumber(percentage);
+                    UpdateNumberDisplay(percentage.ToString());
 
                 }
-                //double result = _operationFactory.Percent(_calculationStateFactory.FirstNumber, _calculationStateFactory.CurrentOperation, secondNumber);
             }
         }
     }
