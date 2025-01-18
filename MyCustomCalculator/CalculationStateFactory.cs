@@ -118,6 +118,10 @@ namespace MyCustomCalculator
             UpdateFullCalculation(true);
         }
 
+        /// <summary>
+        /// This method updates the calculation state.
+        /// </summary>
+        /// <param name="calculationFinished"></param>
         private void UpdateFullCalculation(bool calculationFinished = false)
         {
             if (!string.IsNullOrEmpty(_operation) && calculationFinished == true)
