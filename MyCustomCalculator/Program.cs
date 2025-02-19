@@ -40,6 +40,8 @@ namespace MyCustomCalculator
                     services.AddSingleton<CalculationStateFactory>();
                     services.AddSingleton<StateKeeper>();
                     services.AddTransient<StandardForm>();
+
+
                 });
         }
     }
